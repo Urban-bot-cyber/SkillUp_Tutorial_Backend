@@ -1,6 +1,7 @@
-import { Column, Entity, ManyToOne, JoinColumn } from 'typeorm'
-import { Base } from './base.entity'
 import { Exclude } from 'class-transformer'
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm'
+
+import { Base } from './base.entity'
 import { Role } from './role.entity'
 
 @Entity()

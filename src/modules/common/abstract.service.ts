@@ -1,11 +1,11 @@
-import { BadRequestException, InternalServerErrorException, Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common'
 import { PaginatedResult } from 'interfaces/paginated-result.interface'
 import Logging from 'library/Logging'
 import { Repository } from 'typeorm'
 
 @Injectable()
 export abstract class AbstractService {
-  constructor(protected readonly repository: Repository<any>) { }
+  constructor(protected readonly repository: Repository<any>) {}
 
   async findAll(relations = []): Promise<any[]> {
     try {
@@ -50,7 +50,7 @@ export abstract class AbstractService {
       return this.repository.remove(element)
     } catch (error) {
       Logging.error(error)
-      throw new InternalServerErrorException(`Something went wrong while removing a element`)
+      throw new InternalServerErrorException('Something went wrong while removing a element')
     }
   }
 
@@ -73,7 +73,7 @@ export abstract class AbstractService {
       }
     } catch (error) {
       Logging.error(error)
-      throw new InternalServerErrorException(`Something went wrong while searching for paginated elements`)
+      throw new InternalServerErrorException('Something went wrong while searching for paginated elements')
     }
   }
 }

@@ -1,27 +1,31 @@
-import { Body, ClassSerializerInterceptor, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Query, UseInterceptors,UploadedFile, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Body, ClassSerializerInterceptor, Controller, Delete, Get, HttpCode, HttpStatus, Param, Patch, Post, Query, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { PaginatedResult } from 'interfaces/paginated-result.interface';
+
 import { User } from 'entities/user.entity';
-import { CreateUserDto } from './dto/create.user.dto';
-import { UpdateUserDto } from './dto/update.user.dto';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { isFileExtensionSafe, removeFile, saveImageToStorage } from 'helpers/imageStorage';
 import { join } from 'path';
+import { HasPermission } from 'decorators/has-permission.decorator';
+import { PaginatedResult } from 'interfaces/paginated-result.interface';
+
 
 @Controller('users')
 @UseInterceptors(ClassSerializerInterceptor)
 export class UsersController {
     constructor(private readonly userService: UsersService) {}
 
+    @HasPermission('users')
     @Get()
     @HttpCode(HttpStatus.OK)
-    async findAll(@Query('page') page:number): Promise<PaginatedResult> {
-        return this.userService.paginate(page)
+    async findAll(@Query('page') page: number): Promise<PaginatedResult> {
+        return this.userService.paginate(page, ['role'])
     }
 
     @Get(':id')
     @HttpCode(HttpStatus.OK)
-    async findOne(@Query('id') id: string): Promise<User> {
+    async findOne(@Param('id') id: string): Promise<User> {
         return this.userService.findById(id)
     }
 
@@ -34,29 +38,29 @@ export class UsersController {
     @Post('upload/:id')
     @UseInterceptors(FileInterceptor('avatar', saveImageToStorage))
     @HttpCode(HttpStatus.CREATED)
-    async upload(@UploadedFile() file: Express.Multer.File, @Param('id') id: string):Promise<User>{
+    async upload(@UploadedFile() file: Express.Multer.File, @Param('id') id: string): Promise<User> {
         const filename = file?.filename
-
-        if(!filename) throw new BadRequestException('File must be a png, jpg/jpeg')
+        if (!filename) throw new BadRequestException('File must be png, jpg/jpeg.')
 
         const imagesFolderPath = join(process.cwd(), 'files')
-        const fullImagePath = join(imagesFolderPath + '/' + file.fieldname)
-        if(await isFileExtensionSafe(fullImagePath)){
-            return this.userService.updateUserImageId(id,filename)
+        const fullImagePath = join(imagesFolderPath + '/' + file.filename)
+        if (await isFileExtensionSafe(fullImagePath)) {
+            return this.userService.updateUserImageId(id, filename)
         }
         removeFile(fullImagePath)
-        throw new BadRequestException('File conten does not match extension!')
+        throw new BadRequestException('File content does not mathc extesion.')
     }
 
     @Patch(':id')
     @HttpCode(HttpStatus.OK)
-    async update(@Param('id') id:string, @Body() updateUserDto: UpdateUserDto):Promise<User> {
+    async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto): Promise<User> {
         return this.userService.update(id, updateUserDto)
     }
 
-    @Delete(':id')
+    @Delete()
     @HttpCode(HttpStatus.OK)
-    async remove(@Param('id') id:string):Promise<User>{
+    async delete(@Param('id') id: string): Promise<User> {
         return this.userService.remove(id)
     }
 }
+
